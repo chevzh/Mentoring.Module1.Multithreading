@@ -10,6 +10,7 @@
  */
 
 using System;
+using System.Threading;
 
 namespace MultiThreading.Task4.Threads.Join
 {
@@ -26,9 +27,59 @@ namespace MultiThreading.Task4.Threads.Join
 
             Console.WriteLine();
 
-            // feel free to add your code
+            Console.WriteLine("Part a:");
+            CreateThreads(10);
+
+            Console.WriteLine("Part b:");
+            ThreadPoolCreateThreads(10);
 
             Console.ReadLine();
+        }
+
+        private static void ThreadPoolCreateThreads(object state)
+        {
+            int remainingThreads = (int)state;
+
+            if (remainingThreads > 0)
+            {
+                Semaphore semaphore = new Semaphore(1, 1);
+
+                semaphore.WaitOne();
+
+                Thread thread = new Thread(() =>
+                {
+                    Thread.Sleep(200);
+
+                    remainingThreads -= 1;
+
+                    Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} was created. {remainingThreads} threads needs to be created.");
+
+                    ThreadPool.QueueUserWorkItem(ThreadPoolCreateThreads, remainingThreads);
+                });
+
+                thread.Start();
+
+                semaphore.Release();
+            }
+        }
+
+        private static void CreateThreads(object state)
+        {
+            int remainingThreads = (int)state;
+
+            if (remainingThreads > 0)
+            {
+                Thread.Sleep(200);
+
+                remainingThreads -= 1;
+
+                Thread thread = new Thread(new ParameterizedThreadStart(CreateThreads));
+                thread.Start(remainingThreads);
+
+                Console.WriteLine($"Thread {thread.ManagedThreadId} was created. {remainingThreads} threads needs to be created.");
+
+                thread.Join();
+            }
         }
     }
 }
