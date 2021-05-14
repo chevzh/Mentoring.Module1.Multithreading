@@ -6,7 +6,7 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MultiThreading.Task5.Threads.SharedCollection
@@ -22,12 +22,35 @@ namespace MultiThreading.Task5.Threads.SharedCollection
 
             List<int> list = new List<int>();
 
-            Task additionTask = Task.Factory.StartNew(() =>
+            Task additionTask = Task.Run(() =>
             {
-                
+                for (int i = 0; i < 10; i++)
+                {
+                    lock (list)
+                    {
+                        list.Add(i);
+                        Thread.Sleep(100);
+                    }
+                }
             });
 
+            Task printTask = Task.Run(() =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    lock (list)
+                    {
+                        foreach (int item in list)
+                        {
+                            Console.Write($"{item} ");
+                        }
 
+                        Console.WriteLine();
+
+                        Thread.Sleep(200);
+                    }
+                }
+            });
 
             Console.ReadLine();
         }
