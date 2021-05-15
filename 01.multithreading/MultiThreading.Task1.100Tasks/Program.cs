@@ -45,11 +45,11 @@ namespace MultiThreading.Task1._100Tasks
         {
             for(int i = 0; i < 1000; i++)
             {
-                Output((int)Task.CurrentId, i);
+                Output(Task.CurrentId, i);
             }
         }
 
-        static void Output(int taskNumber, int iterationNumber)
+        static void Output(int? taskNumber, int iterationNumber)
         {
             Console.WriteLine($"Task #{taskNumber} – {iterationNumber}");
         }
