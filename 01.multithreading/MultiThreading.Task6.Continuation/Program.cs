@@ -65,9 +65,12 @@ namespace MultiThreading.Task6.Continuation
             task.ContinueWith((parent) =>
             {
                 Console.WriteLine($"Continuation task that executes outside of the thread pool when the parent task would be cancelled. Thread ID: {Thread.CurrentThread.ManagedThreadId}");
+                Console.WriteLine();
+
+                Console.WriteLine($"This task running outside the thread pool - IsThreadPoolThread property is {Thread.CurrentThread.IsThreadPoolThread}");
                 Console.WriteLine("\n");
 
-            }, TaskContinuationOptions.OnlyOnCanceled);
+            }, TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.LongRunning);
 
             Console.ReadLine();
         }
