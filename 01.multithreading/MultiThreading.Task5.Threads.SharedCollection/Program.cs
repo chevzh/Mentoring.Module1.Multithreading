@@ -20,26 +20,17 @@ namespace MultiThreading.Task5.Threads.SharedCollection
             Console.WriteLine("Use Thread, ThreadPool or Task classes for thread creation and any kind of synchronization constructions.");
             Console.WriteLine();
 
+            Mutex mutex = new Mutex();
             List<int> list = new List<int>();
 
             Task additionTask = Task.Run(() =>
             {
-                for (int i = 0; i < 10; i++)
+                Task printTask = Task.Run(() =>
                 {
-                    lock (list)
+                    for (int i = 0; i < 10; i++)
                     {
-                        list.Add(i);
-                        Thread.Sleep(100);
-                    }
-                }
-            });
+                        mutex.WaitOne();
 
-            Task printTask = Task.Run(() =>
-            {
-                for (int i = 0; i < 10; i++)
-                {
-                    lock (list)
-                    {
                         foreach (int item in list)
                         {
                             Console.Write($"{item} ");
@@ -47,9 +38,20 @@ namespace MultiThreading.Task5.Threads.SharedCollection
 
                         Console.WriteLine();
 
-                        Thread.Sleep(200);
+                        mutex.ReleaseMutex();
                     }
-                }
+                });
+
+                for (int i = 0; i < 10; i++)
+                {
+                    mutex.WaitOne();
+
+                    list.Add(i);
+
+                    Thread.Sleep(1);
+
+                    mutex.ReleaseMutex();
+                }                
             });
 
             Console.ReadLine();
