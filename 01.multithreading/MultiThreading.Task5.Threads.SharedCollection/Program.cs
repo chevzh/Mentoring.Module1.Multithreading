@@ -20,44 +20,46 @@ namespace MultiThreading.Task5.Threads.SharedCollection
             Console.WriteLine("Use Thread, ThreadPool or Task classes for thread creation and any kind of synchronization constructions.");
             Console.WriteLine();
 
-            Semaphore semaphore = new Semaphore(1, 1);
-            Semaphore semaphore2 = new Semaphore(0, 1); // in signal state, one entry is in use.
+            AutoResetEvent additionWaitHandle = new AutoResetEvent(true);
+            AutoResetEvent printWaitHandle = new AutoResetEvent(false);
 
             List<int> list = new List<int>();
 
-            Task additionTask = new Task(() =>
+            Task additionTask = Task.Run(() =>
             {
                 for (int i = 0; i < 10; i++)
                 {
-                    semaphore.WaitOne();
+                    additionWaitHandle.WaitOne();
 
-                    list.Add(i);
-
-                    semaphore2.Release();
-                }
-            });
-
-
-            Task printTask = new Task(() =>
-            {
-                for (int i = 0; i < 10; i++)
-                {
-                    semaphore2.WaitOne();
-
-                    foreach (int item in list)
+                    lock(list)
                     {
-                        Console.Write($"{item} ");
+                        list.Add(i);
                     }
 
-                    Console.WriteLine();
-
-                    semaphore.Release();
-                }
-
+                    printWaitHandle.Set();
+                }                
             });
 
-            additionTask.Start();
-            printTask.Start();
+            Task printTask = Task.Run(() =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    printWaitHandle.WaitOne();
+
+                    lock (list)
+                    {
+                        foreach (int item in list)
+                        {
+                            Console.Write($"{item} ");
+                        }
+
+                        Console.WriteLine();
+                    }
+
+                    additionWaitHandle.Set();
+                }
+                
+            });
 
             Console.ReadLine();
         }
