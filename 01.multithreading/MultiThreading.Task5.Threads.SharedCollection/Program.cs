@@ -20,39 +20,44 @@ namespace MultiThreading.Task5.Threads.SharedCollection
             Console.WriteLine("Use Thread, ThreadPool or Task classes for thread creation and any kind of synchronization constructions.");
             Console.WriteLine();
 
-            Mutex mutex = new Mutex();
+            Semaphore semaphore = new Semaphore(1, 1);
+            Semaphore semaphore2 = new Semaphore(0, 1); // in signal state, one entry is in use.
+
             List<int> list = new List<int>();
 
-            Task additionTask = Task.Run(() =>
+            Task additionTask = new Task(() =>
             {
-                Task printTask = Task.Run(() =>
-                {
-                    for (int i = 0; i < 10; i++)
-                    {
-                        mutex.WaitOne();
-
-                        foreach (int item in list)
-                        {
-                            Console.Write($"{item} ");
-                        }
-
-                        Console.WriteLine();
-
-                        mutex.ReleaseMutex();
-                    }
-                });
-
                 for (int i = 0; i < 10; i++)
                 {
-                    mutex.WaitOne();
+                    semaphore.WaitOne();
 
                     list.Add(i);
 
-                    Thread.Sleep(1);
-
-                    mutex.ReleaseMutex();
-                }                
+                    semaphore2.Release();
+                }
             });
+
+
+            Task printTask = new Task(() =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    semaphore2.WaitOne();
+
+                    foreach (int item in list)
+                    {
+                        Console.Write($"{item} ");
+                    }
+
+                    Console.WriteLine();
+
+                    semaphore.Release();
+                }
+
+            });
+
+            additionTask.Start();
+            printTask.Start();
 
             Console.ReadLine();
         }
