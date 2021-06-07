@@ -10,11 +10,14 @@
  */
 
 using System;
+using System.Threading;
 
 namespace MultiThreading.Task4.Threads.Join
 {
     class Program
     {
+        static Semaphore semaphore = new Semaphore(0, 1);
+
         static void Main(string[] args)
         {
             Console.WriteLine("4.	Write a program which recursively creates 10 threads.");
@@ -26,9 +29,55 @@ namespace MultiThreading.Task4.Threads.Join
 
             Console.WriteLine();
 
-            // feel free to add your code
+            Console.WriteLine("Part a:");
+            CreateThreads(10);
+
+            Console.WriteLine("Part b:");
+            ThreadPoolCreateThreads(10);
 
             Console.ReadLine();
+        }
+
+        private static void ThreadPoolCreateThreads(object state)
+        {
+            int remainingThreads = (int)state;
+
+            remainingThreads -= 1;
+
+            if (remainingThreads > 0)
+            {
+                ThreadPool.QueueUserWorkItem(ThreadPoolCreateThreads, remainingThreads);
+
+                Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} was created. {remainingThreads} threads needs to be created.");
+
+                semaphore.WaitOne();
+
+                Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} continued.");
+
+                semaphore.Release();
+            } else
+            {
+                semaphore.Release();
+            }
+        }
+
+        private static void CreateThreads(object state)
+        {
+            int remainingThreads = (int)state;
+
+            if (remainingThreads > 0)
+            {
+                Thread.Sleep(200);
+
+                remainingThreads -= 1;
+
+                Thread thread = new Thread(new ParameterizedThreadStart(CreateThreads));
+                thread.Start(remainingThreads);
+
+                Console.WriteLine($"Thread {thread.ManagedThreadId} was created. {remainingThreads} threads needs to be created.");
+
+                thread.Join();
+            }
         }
     }
 }

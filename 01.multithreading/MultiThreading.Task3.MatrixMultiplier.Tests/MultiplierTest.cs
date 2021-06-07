@@ -1,7 +1,8 @@
-using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MultiThreading.Task3.MatrixMultiplier.Matrices;
 using MultiThreading.Task3.MatrixMultiplier.Multipliers;
+using System;
+using System.Diagnostics;
 
 namespace MultiThreading.Task3.MatrixMultiplier.Tests
 {
@@ -18,8 +19,32 @@ namespace MultiThreading.Task3.MatrixMultiplier.Tests
         [TestMethod]
         public void ParallelEfficiencyTest()
         {
-            // todo: implement a test method to check the size of the matrix which makes parallel multiplication more effective than
-            // todo: the regular one
+            TimeSpan sequentialMultiplyTime = new TimeSpan();
+            TimeSpan parallelMultiplyTime = new TimeSpan();
+
+            int matrixSize = 1;
+
+            while (parallelMultiplyTime.TotalMilliseconds >= sequentialMultiplyTime.TotalMilliseconds)
+            {
+                IMatrix matrix1 = CreateMatrix(matrixSize);
+                IMatrix matrix2 = CreateMatrix(matrixSize);
+
+                sequentialMultiplyTime = GetExecutionTime(() =>
+                {
+                    new MatricesMultiplier().Multiply(matrix1, matrix2);
+                });
+
+                parallelMultiplyTime = GetExecutionTime(() =>
+                {
+                    new MatricesMultiplierParallel().Multiply(matrix1, matrix2);
+                });
+
+                matrixSize++;
+            }
+
+            Assert.IsTrue(parallelMultiplyTime.TotalMilliseconds < sequentialMultiplyTime.TotalMilliseconds);
+            Console.WriteLine(
+                $"Parallel excution is more effective for {matrixSize}x{matrixSize} matrix with time {parallelMultiplyTime.TotalMilliseconds}ms vs {sequentialMultiplyTime.TotalMilliseconds}ms");
         }
 
         #region private methods
@@ -69,6 +94,34 @@ namespace MultiThreading.Task3.MatrixMultiplier.Tests
             Assert.AreEqual(109, multiplied.GetElement(2, 0));
             Assert.AreEqual(213, multiplied.GetElement(2, 1));
             Assert.AreEqual(728, multiplied.GetElement(2, 2));
+        }
+
+        private IMatrix CreateMatrix(int size)
+        {
+            Random random = new Random();
+
+            IMatrix matrix = new Matrix(size, size);
+
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < size; j++)
+                {
+                    matrix.SetElement(i, j, random.Next(0, 100));
+                }
+            }
+
+            return matrix;
+        }
+
+        private TimeSpan GetExecutionTime(Action testMethod)
+        {
+            Stopwatch timer = Stopwatch.StartNew();
+
+            testMethod();
+
+            timer.Stop();
+
+            return timer.Elapsed;
         }
 
         #endregion
