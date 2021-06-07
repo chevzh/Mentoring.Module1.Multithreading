@@ -16,7 +16,7 @@ namespace MultiThreading.Task4.Threads.Join
 {
     class Program
     {
-        static Semaphore semaphore = new Semaphore(9, 9);
+        static Semaphore semaphore = new Semaphore(0, 1);
 
         static void Main(string[] args)
         {
@@ -33,26 +33,32 @@ namespace MultiThreading.Task4.Threads.Join
             CreateThreads(10);
 
             Console.WriteLine("Part b:");
-            
             ThreadPoolCreateThreads(10);
-            semaphore.Release();
 
             Console.ReadLine();
         }
 
         private static void ThreadPoolCreateThreads(object state)
         {
-            semaphore.WaitOne();
-
             int remainingThreads = (int)state;
 
             remainingThreads -= 1;
 
-            Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} was created. {remainingThreads} threads needs to be created.");
+            if (remainingThreads > 0)
+            {
+                ThreadPool.QueueUserWorkItem(ThreadPoolCreateThreads, remainingThreads);
 
-            ThreadPool.QueueUserWorkItem(ThreadPoolCreateThreads, remainingThreads);            
+                Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} was created. {remainingThreads} threads needs to be created.");
 
-            Thread.Sleep(200);
+                semaphore.WaitOne();
+
+                Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} continued.");
+
+                semaphore.Release();
+            } else
+            {
+                semaphore.Release();
+            }
         }
 
         private static void CreateThreads(object state)
